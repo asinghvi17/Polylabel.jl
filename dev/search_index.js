@@ -1,0 +1,3 @@
+var documenterSearchIndex = {"docs":
+[{"location":"","page":"Home","title":"Home","text":"CurrentModule = Polylabel","category":"page"},{"location":"#Polylabel","page":"Home","title":"Polylabel","text":"","category":"section"},{"location":"","page":"Home","title":"Home","text":"Documentation for Polylabel.","category":"page"},{"location":"","page":"Home","title":"Home","text":"","category":"page"},{"location":"","page":"Home","title":"Home","text":"Modules = [Polylabel]","category":"page"},{"location":"#Polylabel.Cell","page":"Home","title":"Polylabel.Cell","text":"Comparison operators operate on the max_distance field.\n\n\n\n\n\n","category":"type"}]
+}
