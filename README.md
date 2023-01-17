@@ -8,4 +8,4 @@ This package implements an algorithm to find the _pole of inaccessibility_ of a 
 
 The package is built on top of GeometryBasics, and is built to work with GeometryBasics.jl polygons and multipolygons.  
 
-The main entry point is the `polylabel(input::Union{Polygon, MultiPolygon})` function
+The main entry point is the `polylabel(input::Union{Polygon, MultiPolygon})` function.
