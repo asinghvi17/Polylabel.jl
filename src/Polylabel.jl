@@ -91,9 +91,7 @@ function GeoInterface.distance(poly::Polygon{2}, point::Point{2})
 end
 
 function GeoInterface.distance(mp::GeometryBasics.MultiPolygon, point::Point{2})
-    distances = distance.(mp.polygons, (point,))
-
-    return maximum(distances)
+    return maximum(GeoInterface.distance.(mp.polygons, (point,)))
 end
 
 ################################################################################
@@ -117,13 +115,13 @@ function signed_area(poly::GeometryBasics.Polygon{2})
     return area
 end
 
-function centroid(poly::GeometryBasics.Polygon{2})
+function GeoInterface.centroid(poly::GeometryBasics.Polygon{2})
     return mean(GeometryBasics.decompose(Point2f, poly.exterior))
 end
 
-function centroid(multipoly::MultiPolygon)
+function GeoInterface.centroid(multipoly::MultiPolygon)
 
-    centroids = centroid.(multipoly.polygons)
+    centroids = GeoInterface.centroid.(multipoly.polygons)
 
     areas = signed_area.(multipoly.polygons)
     areas ./= sum(areas)
@@ -142,9 +140,9 @@ struct Cell
     "Half the size of a cell"
     half_size::Float32
     "The distance between the cell and the polygon's exterior."
-    distance::Float32
+    distance::Float64
     "The maximum distance from the polygon exterior within a cell."
-    max_distance::Float32
+    max_distance::Float64
 end
 
 for operator in (:<, :≤, Symbol("=="), :≥, :>)
@@ -152,7 +150,7 @@ for operator in (:<, :≤, Symbol("=="), :≥, :>)
 end
 
 function Cell(centroid, half_size, polygon)
-    dist = distance(polygon, centroid)
+    dist = GeoInterface.distance(polygon, centroid)
     max_dist = dist + half_size * √2
     return Cell(
         centroid,
@@ -165,14 +163,27 @@ end
 
 queue_cell!(queue, cell) = enqueue!(queue, cell, cell.max_distance)
 
+
+function GeoInterface.bbox(polygon::GeometryBasics.Polygon{N, T}) where {N, T}
+    return Rect{N, T}(collect(polygon.exterior))
+end
+
+function GeoInterface.bbox(multipoly::GeometryBasics.MultiPolygon{N, T}) where {N, T}
+    return reduce(union, Rect{N, T}.(multipoly.polygons))
+end
+
+"""
+    polylabel(polygon::Polygon; tolerance = 1.0)
+    polylabel(multipoly::MultiPolygon; tolerance = 1.0)
+"""
 function polylabel(polygon; tolerance = 1.0)
-    bbox = Rect{2, Float64}(collect(p1.exterior))
+    bbox = GeoInterface.bbox(polygon)
     min_x, min_y = minimum(bbox)
     max_x, max_y = maximum(bbox)
 
     h = minimum(bbox.widths)/2
 
-    best_cell = Cell(centroid(polygon), 0, polygon)
+    best_cell = Cell(GeoInterface.centroid(polygon), 0, polygon)
 
     cell_queue = DataStructures.PriorityQueue(
         Base.Order.Forward, 
@@ -206,10 +217,10 @@ function polylabel(polygon; tolerance = 1.0)
         h = current_cell.half_size / 2
         x, y = current_cell.centroid
 
-        queue_cell!(cell_queue, Cell(Point2f(x - h, cell.y - h), h, polygon))
-        queue_cell!(cell_queue, Cell(Point2f(x + h, cell.y - h), h, polygon))
-        queue_cell!(cell_queue, Cell(Point2f(x - h, cell.y + h), h, polygon))
-        queue_cell!(cell_queue, Cell(Point2f(x + h, cell.y + h), h, polygon))
+        queue_cell!(cell_queue, Cell(Point2f(x - h, y - h), h, polygon))
+        queue_cell!(cell_queue, Cell(Point2f(x + h, y - h), h, polygon))
+        queue_cell!(cell_queue, Cell(Point2f(x - h, y + h), h, polygon))
+        queue_cell!(cell_queue, Cell(Point2f(x + h, y + h), h, polygon))
 
     end
 
