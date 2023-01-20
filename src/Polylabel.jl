@@ -13,7 +13,7 @@ The package is built on top of the GeoInterface, and is built to work with
 specifically the functions `GeoInterface.contains`, `GeoInterface.distance`, 
 and `GeoInterface.centroid`.  
 
-The main entry point is the [`polylabel(input; tolerance)`](@ref) function.  
+The main entry point is the [`polylabel(input; rtol, atol)`](@ref) function.  
 It returns a 2-Tuple of floats, representing the `x` and `y` 
 coordinates of the pole of inaccessibility that was computed.
 """
@@ -93,16 +93,31 @@ end
 
 
 """
-    polylabel(polygon::Polygon; tolerance = 1.0)
-    polylabel(multipoly::MultiPolygon; tolerance = 1.0)
+    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)
+    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)
+
+`rtol` is relative tolerance, 
 """
-function polylabel(polygon; tolerance = 1.0)
+function polylabel(polygon; atol = nothing, rtol = 0.01)
 
     bounding_box = GeoInterface.extent(polygon)
+
     min_x, min_y = bounding_box.X
     max_x, max_y = bounding_box.Y
 
     h = min((max_x-min_x), (max_y-min_y))/2
+
+    tolerance = if isnothing(atol)
+        @assert rtol > 0 "`rtol` cannot be zero!"
+        rtol > 0.2 && @warn "You have chosen `rtol=$atol` but such a large value will not yield good results.  We recommend that you bound `rtol` to at most 1/20 of your polygon's extent, which is `0.05`."
+        rtol * h
+    else
+        @assert atol > 0 "`atol` cannot be zero!"
+        atol < h && @warn "You have chosen `atol=$atol`, but the size of your bounding box is $(h*2). Such a large value of `atol` will not yield good results.  We recommend that you bound `atol` to at most 1/20 of your polygon's extent, which is `$(h/2)`."
+        atol
+    end
+
+
 
     best_cell = Cell(GeoInterface.centroid(polygon), 0, polygon)
 
