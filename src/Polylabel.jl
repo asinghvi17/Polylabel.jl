@@ -173,7 +173,7 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
 
     best_cell = Cell(GeoInterface.centroid(polygon), 0, polygon)
 
-    cells_visited = [best_cell] # for debugging
+    # cells_visited = [best_cell] # for debugging
 
     cell_queue = DataStructures.PriorityQueue(
         Base.Order.Reverse, # max priority queue - highest value first.
@@ -185,7 +185,7 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
     while init_x < max_x
         init_y = min_y
         while init_y < max_y
-            queue_cell!(cells_visited, cell_queue, Cell(init_x + h, init_y + h, h, polygon))
+            queue_cell!(cell_queue, Cell(init_x + h, init_y + h, h, polygon))
             init_y += h*2
         end
         init_x += h*2
@@ -208,13 +208,13 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
         h = current_cell.half_size / 2.0 
         x, y = current_cell.x, current_cell.y
 
-        queue_cell!(cells_visited, cell_queue, Cell(x - h, y - h, h, polygon))
-        queue_cell!(cells_visited, cell_queue, Cell(x + h, y - h, h, polygon))
-        queue_cell!(cells_visited, cell_queue, Cell(x - h, y + h, h, polygon))
-        queue_cell!(cells_visited, cell_queue, Cell(x + h, y + h, h, polygon))
+        queue_cell!(#=cells_visited,=# cell_queue, Cell(x - h, y - h, h, polygon))
+        queue_cell!(#=cells_visited,=# cell_queue, Cell(x + h, y - h, h, polygon))
+        queue_cell!(#=cells_visited,=# cell_queue, Cell(x - h, y + h, h, polygon))
+        queue_cell!(#=cells_visited,=# cell_queue, Cell(x + h, y + h, h, polygon))
     end
 
-    return (cells_visited, (best_cell.x, best_cell.y))
+    return (best_cell.x, best_cell.y)
 
 end
 
