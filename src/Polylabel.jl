@@ -35,7 +35,7 @@ function signed_distance(poly, point)
 end
 
 function signed_distance(poly, x, y)
-    return signed_distance(poly, GeoInterface.convert(Base.parentmodule(typeof(poly)), [x, y]))
+    return signed_distance(poly, convert(Base.parentmodule(typeof(poly)).geointerface_geomtype(GeoInterface.PointTrait()), [x, y]))
 end
 
 
@@ -58,8 +58,8 @@ struct Cell{T}
     max_distance::T
 end
 
-for operator in (:<, :≤, Symbol("=="), :≥, :>)
-    @eval Base.$(operator)(c1::Cell, c2::Cell) = Base.$(operator)(c1.max_distance, c2.max_distance)
+for operator in (:<, :≤, :(==), :≥, :>, :isless, :isgreater)
+    @eval Base.$(operator)(c1::Cell{T}, c2::Cell{T}) where {T <: Number} = Base.$(operator)(c1.max_distance, c2.max_distance)
 end
 
 function Cell(x, y, half_size, polygon)
@@ -83,7 +83,24 @@ function Cell(centroid, half_size, polygon)
 end
 
 
-queue_cell!(queue, cell) = enqueue!(queue, cell, cell.max_distance)
+function queue_cell!(queue::DataStructures.AbstractHeap, cell)
+    try
+        push!(queue, cell)
+    catch e
+        @show cell queue
+        rethrow(e)
+    end
+end
+
+
+function queue_cell!(queue::DataStructures.PriorityQueue, cell)
+    try
+        enqueue!(queue, cell, cell.max_distance)
+    catch e
+        @show cell queue
+        rethrow(e)
+    end
+end
 
 # for debugging
 function queue_cell!(cells_visited, queue, cell)
@@ -101,43 +118,42 @@ end
 function polylabel(polygon; atol = nothing, rtol = 0.01)
 
     bounding_box = GeoInterface.extent(polygon)
-
-    min_x, min_y = bounding_box.X
-    max_x, max_y = bounding_box.Y
+    min_x, max_x = bounding_box.X
+    min_y, max_y = bounding_box.Y
 
     h = min((max_x-min_x), (max_y-min_y))/2
 
     tolerance = if isnothing(atol)
         @assert rtol > 0 "`rtol` cannot be zero!"
-        rtol > 0.2 && @warn "You have chosen `rtol=$atol` but such a large value will not yield good results.  We recommend that you bound `rtol` to at most 1/20 of your polygon's extent, which is `0.05`."
+        rtol < 0.2 || @warn "You have chosen `rtol=$rtol` but such a large value will not yield good results.  We recommend that you bound `rtol` to at most 1/20 of your polygon's extent, which is `0.05`."
         rtol * h
     else
-        @assert atol > 0 "`atol` cannot be zero!"
-        atol < h && @warn "You have chosen `atol=$atol`, but the size of your bounding box is $(h*2). Such a large value of `atol` will not yield good results.  We recommend that you bound `atol` to at most 1/20 of your polygon's extent, which is `$(h/2)`."
+        @assert atol > 0 "`atol` cannot be zero or negative!"
+        atol < h || @warn "You have chosen `atol=$atol`, but the size of your bounding box is $(h*2). Such a large value of `atol` will not yield good results.  We recommend that you bound `atol` to at most 1/20 of your polygon's extent, which is `$(h/2)`."
         atol
     end
 
-
-
     best_cell = Cell(GeoInterface.centroid(polygon), 0, polygon)
 
+    cells_visited = [best_cell] # for debugging
 
     cell_queue = DataStructures.PriorityQueue(
         Base.Order.Reverse, # max priority queue - highest value first.
-        best_cell => best_cell.max_distance # order by max distance
+        best_cell => best_cell.max_distance
+        # [best_cell]
     )
 
     init_x = min_x
     while init_x < max_x
         init_y = min_y
         while init_y < max_y
-            queue_cell!(cell_queue, Cell(init_x + h, init_y + h, h, polygon))
+            queue_cell!(cells_visited, cell_queue, Cell(init_x + h, init_y + h, h, polygon))
             init_y += h*2
         end
         init_x += h*2
     end
 
-    while !isempty(cell_queue.xs)
+    while !(Base.isempty(cell_queue))
     
         current_cell = dequeue!(cell_queue)
 
@@ -154,14 +170,13 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
         h = current_cell.half_size / 2.0 
         x, y = current_cell.x, current_cell.y
 
-        queue_cell!(cell_queue, Cell(x - h, y - h, h, polygon))
-        queue_cell!(cell_queue, Cell(x + h, y - h, h, polygon))
-        queue_cell!(cell_queue, Cell(x - h, y + h, h, polygon))
-        queue_cell!(cell_queue, Cell(x + h, y + h, h, polygon))
-
+        queue_cell!(cells_visited, cell_queue, Cell(x - h, y - h, h, polygon))
+        queue_cell!(cells_visited, cell_queue, Cell(x + h, y - h, h, polygon))
+        queue_cell!(cells_visited, cell_queue, Cell(x - h, y + h, h, polygon))
+        queue_cell!(cells_visited, cell_queue, Cell(x + h, y + h, h, polygon))
     end
 
-    return (best_cell.x, best_cell.y)
+    return (cells_visited, (best_cell.x, best_cell.y))
 
 end
 
