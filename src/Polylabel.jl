@@ -25,19 +25,57 @@ using GeoInterface
 export polylabel
 
 
-function signed_distance(poly, point)
-    dist = GeoInterface.distance(poly, point)
-    if GeoInterface.contains(poly, point)
-        return abs(dist)
+
+# function signed_distance(poly, point)
+#     distances = GeoInterface.distan
+#     dist = GeoInterface.distance(poly, point)
+#     if GeoInterface.contains(poly, point)
+#         return abs(dist)
+#     else
+#         return -abs(dist)
+#     end
+# end
+
+Base.@propagate_inbounds euclid_distance(p1, p2) = sqrt((GeoInterface.x(p2)-GeoInterface.x(p1))^2 + (GeoInterface.y(p2)-GeoInterface.y(p1))^2)
+
+function signed_distance(::GeoInterface.PolygonTrait, poly, x, y)
+    # return signed_distance(poly, convert(Base.parentmodule(typeof(poly)).geointerface_geomtype(GeoInterface.PointTrait()), [x, y]))
+    min_dist = typemax(Float64)
+    min_coord = nothing
+    xy = (x, y)
+
+    @inbounds for coord in GeoInterface.coordinates(GeoInterface.getexterior(poly))
+        dist = euclid_distance(coord, xy)
+        if min_dist > dist
+            min_dist = dist
+            min_coord = coord
+        end
+    end
+
+    @inbounds for hole in 1:GeoInterface.nhole(poly)
+        for coord in GeoInterface.coordinates(GeoInterface.gethole(poly, hole))
+            dist = euclid_distance(coord, xy)
+            if min_dist > dist
+                min_dist = dist
+                min_coord = coord
+            end
+        end
+    end
+
+    if GeoInterface.contains(poly, GeoInterface.convert(Base.parentmodule(typeof(poly)), (x, y)))
+        return min_dist
     else
-        return -abs(dist)
+        return -min_dist
     end
 end
 
-function signed_distance(poly, x, y)
-    return signed_distance(poly, convert(Base.parentmodule(typeof(poly)).geointerface_geomtype(GeoInterface.PointTrait()), [x, y]))
+function signed_distance(::GeoInterface.MultiPolygonTrait, multipoly, x, y)
+    distances = signed_distance.(GeoInterface.getpolygon(multipoly), x, y)
+    max_val, max_ind = findmax(distances)
+    return max_val
 end
 
+signed_distance(geom, x, y) = signed_distance(GeoInterface.geomtrait(geom), geom, x, y)
 
 
 """

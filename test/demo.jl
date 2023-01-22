@@ -2,9 +2,9 @@ using Polylabel, GeoMakie, Downloads, ProgressMeter
 
 state_centroids = LibGEOS.centroid.(convert.(LibGEOS.MultiPolygon, state_df.geometry))
 
-GeoInterface.distance.(convert.(LibGEOS.MultiPolygon, state_df.geometry), state_centroids)
+println.(zip(state_df.ST_NM, Polylabel.signed_distance.(geo2archgdal.(state_df.geometry), GeoInterface.x.(state_centroids), GeoInterface.y.(state_centroids))))
 
-state_polylabels_and_cellstructs = Polylabel.polylabel.(convert.(LibGEOS.MultiPolygon, state_df.geometry); atol = 0.07)
+state_polylabels_and_cellstructs = Polylabel.polylabel.(GeoInterface.convert.((ArchGDAL,), state_df.geometry); rtol = 0.01)
 
 mkpath(joinpath(@__DIR__, "tests_2"))
 
