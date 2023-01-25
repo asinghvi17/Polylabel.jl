@@ -25,18 +25,8 @@ using GeoInterface
 export polylabel
 
 
-
-# function signed_distance(poly, point)
-#     distances = GeoInterface.distan
-#     dist = GeoInterface.distance(poly, point)
-#     if GeoInterface.contains(poly, point)
-#         return abs(dist)
-#     else
-#         return -abs(dist)
-#     end
-# end
-
 Base.@propagate_inbounds euclid_distance(p1, p2) = sqrt((GeoInterface.x(p2)-GeoInterface.x(p1))^2 + (GeoInterface.y(p2)-GeoInterface.y(p1))^2)
+
 
 function signed_distance(::GeoInterface.PolygonTrait, poly, x, y)
     # return signed_distance(poly, convert(Base.parentmodule(typeof(poly)).geointerface_geomtype(GeoInterface.PointTrait()), [x, y]))
@@ -75,6 +65,17 @@ function signed_distance(::GeoInterface.MultiPolygonTrait, multipoly, x, y)
     return max_val
 end
 
+
+"""
+    signed_distance(geom, x::Real, y::Real)::Float64
+
+Calculates the signed distance from the geometry `geom` to the point
+defined by `(x, y)`.  Points within `geom` have a negative distance,
+and points outside of `geom` have a positive distance.
+
+If `geom` is a MultiPolygon, then this function returns the maximum distance 
+to any of the polygons in `geom`.
+"""
 signed_distance(geom, x, y) = signed_distance(GeoInterface.geomtrait(geom), geom, x, y)
 
 
@@ -148,10 +149,22 @@ end
 
 
 """
-    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)
-    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)
+    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::NTuple{2, Float64}
+    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::NTuple{2, Float64}
 
-`rtol` is relative tolerance, 
+`polylabel` finds the pole of inaccessibility of the given polygon or multipolygon, and returns
+its coordinates as a 2-Tuple of `(x, y)`.  Tolerances can be specified.  
+
+Any geometry which expresses the `GeoInterface.jl` polygon or multipolygon traits can be passed to this method,
+so long as it implements the `GeoInterface` methods `extent`, `contains`, and `centroid`, in addition to the polygon
+`coordinates`, `getexterior`, and `gethole` interfaces.
+
+`rtol` is relative tolerance, `atol` is absolute tolerance (in the same vein as `Base.isapprox`).
+When `atol` is provided, it overrides `rtol`.
+
+!!!warning
+    The performance of this function is still being actively improved; specifically the signed distance
+    function needs some optimization.  Until then, this will be much slower than the equivalent in Python/JS.
 """
 function polylabel(polygon; atol = nothing, rtol = 0.01)
 
