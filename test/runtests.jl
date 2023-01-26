@@ -29,16 +29,17 @@ using Test
         @test c1.y == GeoInterface.y(GeoInterface.centroid(p1))
     end
 
+    # we don't test this on CI, since it's a pain.
     haskey(ENV, "CI") || @testset "GeometryBasics MWE" begin
-        labelpoint = Polylabel.polylabel(p1, rtol = 0.01)
-        @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (7.998046875, 0.130859375))
+        labelpoint = Polylabel.polylabel(p1, rtol = 0.001)
+        @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
     end
 
     @testset "ArchGDAL MWE" begin
         # define this method for now
         Polylabel.GeoInterface.centroid(::Polylabel.GeoInterface.PolygonTrait, geom::ArchGDAL.IGeometry) = ArchGDAL.centroid(geom)
         labelpoint = Polylabel.polylabel(Polylabel.GeoInterface.convert(ArchGDAL, p1), rtol = 0.001)
-        @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (7.752197265625, -0.504638671875))
+        @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
     end
 
     # add this in once LibGEOS supports the API

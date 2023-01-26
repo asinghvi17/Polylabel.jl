@@ -1,33 +1,64 @@
-using Polylabel, GeoMakie, Downloads, ProgressMeter
+using Polylabel, GeometryBasics
 
-state_centroids = LibGEOS.centroid.(convert.(LibGEOS.MultiPolygon, state_df.geometry))
 
-println.(zip(state_df.ST_NM, Polylabel.signed_distance.(geo2archgdal.(state_df.geometry), GeoInterface.x.(state_centroids), GeoInterface.y.(state_centroids))))
+function view_signed_distance_field(p1)
 
-state_polylabels_and_cellstructs = Polylabel.polylabel.(GeoInterface.convert.((ArchGDAL,), state_df.geometry); rtol = 0.01)
+    bounding_box = Polylabel.GeoInterface.extent(p1)
+    min_x, max_x = bounding_box.X
+    min_y, max_y = bounding_box.Y
+    # double the range
+    min_x -= 1.5*abs(min_x)
+    min_y -= 1.5*abs(min_y)
+    max_x += 1.5*abs(max_x)
+    max_y += 1.5*abs(max_y)
 
-mkpath(joinpath(@__DIR__, "tests_2"))
+    xs = LinRange(min_x, max_x, 800)
+    ys = LinRange(min_y, max_y, 800)
 
-@showprogress for (row, centroid_pos, (cells_visited, polylabel_pos)) in zip(eachrow(state_df), state_centroids, state_polylabels_and_cellstructs)
-    f, a, p = poly(GeoMakie.geo2basic(row.geometry))
-    a.aspect = DataAspect()
-    a.title = row.ST_NM
-    # a.subtitle = "polylabel: $(GeoInterface.contains(row.geometry, polylabel_pos) ? "in" : "out"), centroid: $(GeoInterface.contains(row.geometry, centroid_pos) ? "in" : "out")"
-    scatter!(a, [polylabel_pos]; color = Cycled(2), markersize = 15)
-    # scatter!(a, [centroid_pos]; color = Cycled(3))
+    sdf = Polylabel.signed_distance.(Ref(p1), xs, ys')
 
-    for cell in cells_visited
-        poly!(a, Rect2{Float64}(Point2f(cell.x, cell.y) .- cell.half_size, Vec2{Float64}(2*cell.half_size)); strokewidth = 0.5, strokecolor = :black, color = :transparent)
-    end
-    save(joinpath(@__DIR__, "tests_2", "$(row.ST_NM).png"), f; px_per_unit = 4)
+    cmin, cmax = extrema(sdf)
+    clim = max(abs(cmin), abs(cmax))
+
+    fig, ax, plt = Makie.heatmap(
+        xs, ys,
+        sdf;
+        colormap = :RdBu,
+        colorrange = (-clim, clim),
+        axis = (aspect = Makie.DataAspect(), title = "Signed distance field of polygon")
+        
+    )   
+    Makie.Colorbar(fig[1, 2], plt; label = "Signed distance", alignmode = Makie.Inside())
+    fig
 end
 
-Makie.convert_arguments(::Makie.Poly, cells::Vec)
+function view_contains_field(p1)
 
-poly(state_df.geometry; color = :transparent, strokecolor = :black, strokewidth = 0.4)
-scatter!(first.(state_polylabels_and_cellstructs); color = Cycled(2), markersize = 15)
-scatter!(state_centroids; color = Cycled(3))
-Makie.current_figure()
+    bounding_box = Polylabel.GeoInterface.extent(p1)
+    min_x, max_x = bounding_box.X
+    min_y, max_y = bounding_box.Y
+    # double the range
+    min_x -= 1.5*abs(min_x)
+    min_y -= 1.5*abs(min_y)
+    max_x += 1.5*abs(max_x)
+    max_y += 1.5*abs(max_y)
 
+    xs = LinRange(min_x, max_x, 800)
+    ys = LinRange(min_y, max_y, 800)
 
-state_polylabels_and_cellstructs[33][1]
+    sdf = GeoInterface.contains.(Ref(p1), GeoInterface.convert.((Base.parentmodule(typeof(p1)),), Point2f.(xs, ys')))
+
+    cmin, cmax = extrema(sdf)
+    clim = max(abs(cmin), abs(cmax))
+
+    fig, ax, plt = Makie.heatmap(
+        xs, ys,
+        sdf;
+        colormap = :RdBu,
+        colorrange = (-clim, clim),
+        axis = (aspect = Makie.DataAspect(), title = "Signed distance field of polygon")
+        
+    )   
+    Makie.Colorbar(fig[1, 2], plt; label = "Signed distance", alignmode = Makie.Inside())
+    fig
+end
