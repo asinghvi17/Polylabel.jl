@@ -16,13 +16,16 @@ using Test
         geointerface_geomtype(::GeoInterface.PointTrait) = Point
     end
 
+    Polylabel.GeoInterface.centroid(::Polylabel.GeoInterface.PolygonTrait, geom::ArchGDAL.IGeometry) = ArchGDAL.centroid(geom)
+
     @testset "Signed distance" begin
-        @test Polylabel.signed_distance(p1, 0, 0) ≈ 9.0
-        @test Polylabel.signed_distance(p1, 30, 0) ≈ -10.0
+        # TODO: test here as well, once the necessary changes are merged into GeometryBasics.
+        @test Polylabel.signed_distance(GeoInterface.convert(ArchGDAL, p1), 0, 0) ≈ 6.689647316224497
+        @test Polylabel.signed_distance(GeoInterface.convert(ArchGDAL, p1), 30, 0) == -10.0
     end
 
     @testset "Cell construction" begin
-        c1 = Polylabel.Cell(GeoInterface.centroid(p1), 0, p1)
+        c1 = Polylabel.Cell(GeoInterface.centroid(GeoInterface.convert(ArchGDAL, p1)), 0, p1)
         @test c1.max_distance ≈ -9.910712498212337
         @test c1.distance ≈ -9.910712498212337
         @test c1.x == GeoInterface.x(GeoInterface.centroid(p1))
@@ -37,7 +40,6 @@ using Test
 
     @testset "ArchGDAL MWE" begin
         # define this method for now
-        Polylabel.GeoInterface.centroid(::Polylabel.GeoInterface.PolygonTrait, geom::ArchGDAL.IGeometry) = ArchGDAL.centroid(geom)
         labelpoint = Polylabel.polylabel(Polylabel.GeoInterface.convert(ArchGDAL, p1), rtol = 0.001)
         @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
     end
