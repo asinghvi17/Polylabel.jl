@@ -34,7 +34,7 @@ function signed_distance(::GeoInterface.PolygonTrait, poly, x, y)
     min_coord = nothing
     xy = (x, y)
 
-    @inbounds for coord in GeoInterface.coordinates(GeoInterface.getexterior(poly))
+    @inbounds for coord in GeoInterface.getpoint(GeoInterface.getexterior(poly))
         dist = euclid_distance(coord, xy)
         if min_dist > dist
             min_dist = dist
@@ -43,7 +43,7 @@ function signed_distance(::GeoInterface.PolygonTrait, poly, x, y)
     end
 
     @inbounds for hole in 1:GeoInterface.nhole(poly)
-        for coord in GeoInterface.coordinates(GeoInterface.gethole(poly, hole))
+        for coord in GeoInterface.getpoint(GeoInterface.gethole(poly, hole))
             dist = euclid_distance(coord, xy)
             if min_dist > dist
                 min_dist = dist
