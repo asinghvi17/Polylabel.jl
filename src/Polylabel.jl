@@ -149,8 +149,8 @@ end
 
 
 """
-    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::NTuple{2, Float64}
-    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::NTuple{2, Float64}
+    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::Tuple{Float64, Float64}
+    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::Tuple{Float64, Float64}
 
 `polylabel` finds the pole of inaccessibility of the given polygon or multipolygon, and returns
 its coordinates as a 2-Tuple of `(x, y)`.  Tolerances can be specified.  
@@ -162,7 +162,7 @@ so long as it implements the `GeoInterface` methods `extent`, `contains`, and `c
 `rtol` is relative tolerance, `atol` is absolute tolerance (in the same vein as `Base.isapprox`).
 When `atol` is provided, it overrides `rtol`.
 
-!!!warning
+!!! warning
     The performance of this function is still being actively improved; specifically the signed distance
     function needs some optimization.  Until then, this will be much slower than the equivalent in Python/JS.
 """

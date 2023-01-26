@@ -12,6 +12,8 @@ using Test
             GeometryBasics.Point2{Float64}(-10, 0)
         ])
 
+    GeometryBasics.geointerface_geomtype(::GeoInterface.PointTrait) = GeometryBasics.Point
+
     @testset "Signed distance" begin
         @test Polylabel.signed_distance(p1, 0, 0) ≈ 9.0
         @test Polylabel.signed_distance(p1, 30, 0) ≈ -10.0

@@ -6,6 +6,6 @@
 
 This package implements an algorithm to find the _pole of inaccessibility_ of a polygon, the most distant internal point from the polygon outline.  This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - you can find a lot more information there!
 
-The package is built on top of the GeoInterface, and is built to work with any polygons or multipolygon object which implements the GeoInterface, specifically the functions `GeoInterface.contains`, `GeoInterface.distance`, and `GeoInterface.centroid`.  
+The package is built on top of the GeoInterface, and is built to work with any polygons or multipolygon object which implements the GeoInterface, specifically the functions `GeoInterface.contains`, `GeoInterface.centroid`, and the `geointerface_geomtype` API for reverse conversion.  
 
-The main entry point is the `polylabel(input; tolerance)` function.  It returns a 2-Tuple of floats, representing the x and y coordinates of the found pole of inaccessibility.
+The main entry point is the `polylabel(input; atol = nothing, rtol = 0.01)` function.  It returns a 2-Tuple of floats, representing the x and y coordinates of the found pole of inaccessibility.
