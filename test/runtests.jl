@@ -28,8 +28,8 @@ using Test
         c1 = Polylabel.Cell(GeoInterface.centroid(GeoInterface.convert(ArchGDAL, p1)), 0, GeoInterface.convert(ArchGDAL, p1))
         @test c1.max_distance ≈ 7.143385123871666
         @test c1.distance ≈ 7.143385123871666
-        @test c1.x == GeoInterface.x(GeoInterface.centroid(p1))
-        @test c1.y == GeoInterface.y(GeoInterface.centroid(p1))
+        @test c1.x == GeoInterface.x(GeoInterface.centroid(GeoInterface.convert(ArchGDAL, p1)))
+        @test c1.y == GeoInterface.y(GeoInterface.centroid(GeoInterface.convert(ArchGDAL, p1)))
     end
 
     # we don't test this on CI, since it's a pain.
