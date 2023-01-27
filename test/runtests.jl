@@ -25,9 +25,9 @@ using Test
     end
 
     @testset "Cell construction" begin
-        c1 = Polylabel.Cell(GeoInterface.centroid(GeoInterface.convert(ArchGDAL, p1)), 0, p1)
-        @test c1.max_distance ≈ -9.910712498212337
-        @test c1.distance ≈ -9.910712498212337
+        c1 = Polylabel.Cell(GeoInterface.centroid(GeoInterface.convert(ArchGDAL, p1)), 0, GeoInterface.convert(ArchGDAL, p1))
+        @test c1.max_distance ≈ 7.143385123871666
+        @test c1.distance ≈ 7.143385123871666
         @test c1.x == GeoInterface.x(GeoInterface.centroid(p1))
         @test c1.y == GeoInterface.y(GeoInterface.centroid(p1))
     end
