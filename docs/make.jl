@@ -20,4 +20,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/asinghvi17/Polylabel.jl",
     devbranch="main",
+    push_previews = true,
 )
