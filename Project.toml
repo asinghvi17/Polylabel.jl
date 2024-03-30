@@ -1,7 +1,7 @@
 name = "Polylabel"
 uuid = "49a44318-e865-4b63-9842-695152d634c1"
 authors = ["Anshul Singhvi <anshulsinghvi@gmail.com> and contributors"]
-version = "0.2.0-DEV"
+version = "0.2.0"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
@@ -12,13 +12,14 @@ GeometryOps = "3251bfac-6a57-4b6d-aa61-ac1fef2975ab"
 DataStructures = "0.15, 0.16, 0.17, 0.18"
 GeoInterface = "1"
 GeometryOps = "0"
-julia = "1.5"
+julia = "1.9"
 
 [extras]
 ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
+GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
 LibGEOS = "a90b1aa1-3769-5649-ba7e-abc5a9d163eb"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "ArchGDAL", "GeometryBasics", "LibGEOS"]
+test = ["Test", "ArchGDAL", "GeoInterface", "GeometryBasics", "LibGEOS"]

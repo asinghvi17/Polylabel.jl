@@ -1,56 +1,21 @@
-"""
-    Polylabel.jl
+#=
 
+# Polylabel.jl
 
-This package implements an algorithm to find the _pole of inaccessibility_ 
-of a polygon, the most distant internal point from the polygon outline.  
+This is a Julia implementation of the [polylabel](https://github.com/mapbox/polylabel) algorithm. 
+The polylabel algorithm finds the pole of inaccessibility (the most distant internal point from the polygon outline) 
+of a polygon, which can be useful for labeling polygons on a map in a visually pleasing way.
 
-This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) 
-- you can find a lot more information there!
+The algorithm is based on the JavaScript implementation by Vladimir Agafonkin and contributors.
 
-The package is built on top of the GeoInterface, and is built to work with 
-*any* polygons or multipolygon object which implements the GeoInterface, 
-specifically the functions `GeoInterface.contains`, `GeoInterface.distance`, 
-and `GeoInterface.centroid`.  
+=#
 
-The main entry point is the [`polylabel(input; rtol, atol)`](@ref) function.  
-It returns a 2-Tuple of floats, representing the `x` and `y` 
-coordinates of the pole of inaccessibility that was computed.
-"""
 module Polylabel
 
 using DataStructures # for PriorityQueue
-using GeoInterface
-import GeometryOps as GO
+import GeoInterface as GI, GeometryOps as GO
 
 export polylabel
-
-
-Base.@propagate_inbounds euclid_distance(p1, p2) = hypot((GeoInterface.x(p2)-GeoInterface.x(p1)), (GeoInterface.y(p2)-GeoInterface.y(p1)))
-euclid_distance(x1, y1, x2, y2) = hypot((x2-x1), (y2-y1))
-
-
-"""
-    _signed_distance(geom, x::Real, y::Real)::Float64
-
-Calculates the signed distance from the geometry `geom` to the point
-defined by `(x, y)`.  Points within `geom` have a positive distance,
-and points outside of `geom` have a negative distance.
-
-If `geom` is a MultiPolygon, then this function returns the maximum distance 
-to any of the polygons in `geom`.  
-
-!!! warning
-"""
-_signed_distance(geom, x, y) = -GO.signed_distance(GeoInterface.geomtrait(geom), geom, GeoInterface.PointTrait(), (x, y))
-
-function _signed_distance(::GeoInterface.MultiPolygonTrait, multipoly, x::T1, y::T2) where {T1, T2}
-    T = Base.promote_type(T1, T2)
-    -applyreduce(max, GeoInterface.PolygonTrait(), geom; init=typemin(T)) do g
-        GO.signed_distance(GeoInterface.PointTrait(), (x, y), GeoInterface.PolygonTrait(), g, T)
-    end
-end
-
 
 """
     Cell(x, y, half_size, polygon)
@@ -76,7 +41,7 @@ end
 
 function Cell(x, y, half_size, polygon)
 
-    dist = _signed_distance(polygon, x, y)
+    dist = -GO.signed_distance(polygon, (x, y))
     max_dist = dist + half_size * √2
 
     T = reduce(promote_type, typeof.((x, y, half_size, dist, max_dist)))
@@ -90,7 +55,7 @@ function Cell(x, y, half_size, polygon)
 end
 
 function Cell(centroid, half_size, polygon)
-    x, y = GeoInterface.x(centroid), GeoInterface.y(centroid)
+    x, y = GI.x(centroid), GI.y(centroid)
     return Cell(x, y, half_size, polygon)
 end
 
@@ -140,8 +105,17 @@ When `atol` is provided, it overrides `rtol`.
     function needs some optimization.  Until then, this will be much slower than the equivalent in Python/JS.
 """
 function polylabel(polygon; atol = nothing, rtol = 0.01)
+    @assert GI.trait(polygon) isa Union{GI.PolygonTrait, GI.MultiPolygonTrait} """
+    The input must be a polygon or multipolygon type, indicated by `GeoInterface.trait(polygon)`.  
+    
+    $(
+        isnothing(GI.trait(polygon)) ? "The input has no GeoInterface trait and was not recognized by GeoInterface." : "The input has GeoInterface trait $(GI.trait(polygon)), which is not PolygonTrait() or MultiPolygonTrait()."
+    )
 
-    bounding_box = GeoInterface.extent(polygon)
+    The input type was $(typeof(polygon)).
+    """
+    
+    bounding_box = GI.extent(polygon)
     min_x, max_x = bounding_box.X
     min_y, max_y = bounding_box.Y
 
