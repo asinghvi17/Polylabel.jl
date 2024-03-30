@@ -12,7 +12,7 @@ In the plot above, this point is shown in orange, while the input polygon (multi
 
 The package is built on top of `GeoInterface.jl` and `GeometryOps.jl`, and works with any polygon or multipolygon object which implements the GeoInterface `geointerface_geomtype` API for reverse conversion.  
 
-The main entry point is the `polylabel(input; atol = nothing, rtol = 0.01)` function.  It returns a 2-Tuple of floats, representing the x and y coordinates of the found pole of inaccessibility.
+The main entry point is the `polylabel(input [; atol = nothing, rtol = 0.01])` function.  It returns a 2-Tuple of floats, representing the x and y coordinates of the found pole of inaccessibility.
 
 ```@index
 ```

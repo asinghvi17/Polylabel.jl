@@ -15,7 +15,7 @@ function view_signed_distance_field(p1)
     xs = LinRange(min_x, max_x, 800)
     ys = LinRange(min_y, max_y, 800)
 
-    sdf = Polylabel.signed_distance.(Ref(p1), xs, ys')
+    sdf = GO.signed_distance.(Ref(p1), tuple.(xs, ys'))
 
     cmin, cmax = extrema(sdf)
     clim = max(abs(cmin), abs(cmax))
