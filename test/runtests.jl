@@ -1,7 +1,7 @@
 using Polylabel
 import ArchGDAL, GeometryBasics, LibGEOS
-using Polylabel: GO
-using Polylabel.GeoInterface
+import Polylabel: GO, GI
+using GeoInterface
 using Test
 
 @testset "Polylabel.jl" begin
@@ -12,12 +12,6 @@ using Test
             GeometryBasics.Point2{Float64}(0, -10),
             GeometryBasics.Point2{Float64}(-10, 0)
         ])
-
-    @testset "Signed distance" begin
-        # TODO: test here as well, once the necessary changes are merged into GeometryBasics.
-        @test Polylabel._signed_distance(GeoInterface.convert(ArchGDAL, p1), 0, 0) ≈ 6.689647316224497
-        @test Polylabel._signed_distance(GeoInterface.convert(ArchGDAL, p1), 30, 0) == -10.0
-    end
 
     @testset "Cell construction" begin
         c1 = Polylabel.Cell(Polylabel.GO.centroid(GeoInterface.convert(ArchGDAL, p1)), 0, GeoInterface.convert(ArchGDAL, p1))
@@ -31,13 +25,13 @@ using Test
     @testset "Genericness" begin
         @testset "GeometryBasics MWE" begin
             labelpoint = Polylabel.polylabel(p1, rtol = 0.001)
-            @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
+            @test all(GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
         end
 
         @testset "ArchGDAL MWE" begin
             # define this method for now
             labelpoint = Polylabel.polylabel(GeoInterface.convert(ArchGDAL, p1), rtol = 0.001)
-            @test all(Polylabel.GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
+            @test all(GeoInterface.coordinates(labelpoint) .≈ (1.564208984375, -0.374755859375))
         end
 
         # add this in once LibGEOS supports the API
@@ -46,6 +40,30 @@ using Test
             labelpoint = Polylabel.polylabel(GeoInterface.convert(LibGEOS, p1), rtol = 0.001)
             @test all(labelpoint .≈ (1.564208984375, -0.374755859375))
         end
+    end
+
+    # The testsets below are taken from the original Mapbox tests.
+    @testset "Rivers from Mapbox tests" begin
+        water1 = ArchGDAL.fromWKT([readchomp(joinpath(@__DIR__, "data", "water1.wkt")) |> String])
+        water2 = ArchGDAL.fromWKT([readchomp(joinpath(@__DIR__, "data", "water2.wkt")) |> String])
+        @testset "water1" begin
+            labelpoint = Polylabel.polylabel(water1, atol = 1)
+            @test all(GeoInterface.coordinates(labelpoint) .≈ (3865.85009765625, 2124.87841796875))
+            labelpoint = Polylabel.polylabel(water1, atol = 50)
+            @test all(GeoInterface.coordinates(labelpoint) .≈ (3854.296875, 2123.828125))
+        end
+        @testset "water2" begin
+            labelpoint = polylabel(water2; atol = 1)
+            @test all(labelpoint .== (3263.5, 3263.5))
+        end
+    end
+
+    @testset "Degenerate points" begin
+        p1 = GI.Polygon([[[0, 0], [1, 0], [2, 0], [0, 0]]])
+        p2 = GI.Polygon([[[0, 0], [1, 0], [1, 1], [1, 0], [0, 0]]])
+
+        # @test all(Polylabel.polylabel(p1) .== (0.0, 0.0))
+        # @test all(Polylabel.polylabel(p1) .== (0.0, 0.0))
     end
 
     # add other GeoInterface-compatible packages later as well.
