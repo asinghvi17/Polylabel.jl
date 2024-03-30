@@ -1,15 +1,17 @@
 name = "Polylabel"
 uuid = "49a44318-e865-4b63-9842-695152d634c1"
 authors = ["Anshul Singhvi <anshulsinghvi@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.2.0-DEV"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
+GeometryOps = "3251bfac-6a57-4b6d-aa61-ac1fef2975ab"
 
 [compat]
 DataStructures = "0.15, 0.16, 0.17, 0.18"
 GeoInterface = "1"
+GeometryOps = "0"
 julia = "1.5"
 
 [extras]
