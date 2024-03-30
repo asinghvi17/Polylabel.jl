@@ -10,6 +10,25 @@ This package implements an algorithm to find the _pole of inaccessibility_ of a 
 
 In the plot above, this point is shown in orange, while the input polygon (multipolygon in this case) is shown in blue. 
 
-The package is built on top of the GeoInterface, and is built to work with any polygons or multipolygon object which implements the GeoInterface, specifically the functions `GeoInterface.contains`, `GeoInterface.centroid`, and the `geointerface_geomtype` API for reverse conversion.  
+The package is built on top of `GeoInterface.jl` and `GeometryOps.jl`, and works with any polygon or multipolygon object which implements the GeoInterface `geointerface_geomtype` API for reverse conversion.  
 
 The main entry point is the `polylabel(input; atol = nothing, rtol = 0.01)` function.  It returns a 2-Tuple of floats, representing the x and y coordinates of the found pole of inaccessibility.
+
+## Quick start
+
+First, get your polygon through whatever means:
+```julia
+using GeoInterface
+p = begin
+    # your code to get a polygon here
+    end
+```
+Now, assuming `p` is your polygon or multipolygon (it can be from any GeoInterface package, like LibGEOS, ArchGDAL, GeometryBasics, Shapefile, GeoJSON, etc),
+```julia
+using Polylabel
+polylabel(p)
+```
+will give you a result!
+
+To shorten the time to compute, increase the keyword argument `rtol` (currently a 1% difference) or set `atol` to something at the scale you want.
+

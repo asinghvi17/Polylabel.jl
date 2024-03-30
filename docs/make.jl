@@ -1,5 +1,5 @@
 using Polylabel
-using Documenter
+using Documenter, DocumenterVitepress
 
 DocMeta.setdocmeta!(Polylabel, :DocTestSetup, :(using Polylabel); recursive=true)
 
@@ -8,11 +8,9 @@ makedocs(;
     authors="Anshul Singhvi <anshulsinghvi@gmail.com> and contributors",
     repo="https://github.com/asinghvi17/Polylabel.jl/blob/{commit}{path}#{line}",
     sitename="Polylabel.jl",
-    format=Documenter.HTML(;
-        prettyurls=get(ENV, "CI", "false") == "true",
-        canonical="https://asinghvi17.github.io/Polylabel.jl",
-        edit_link="main",
-        assets=String[],
+    format=DocumenterVitepress.MarkdownVitepress(;
+        repo = "https://github.com/asinghvi17/Polylabel.jl",
+        devurl = "dev",
     ),
     pages=[
         "Home" => "index.md",
@@ -22,4 +20,5 @@ makedocs(;
 deploydocs(;
     repo="github.com/asinghvi17/Polylabel.jl",
     devbranch="main",
+    push_preview = true,
 )
