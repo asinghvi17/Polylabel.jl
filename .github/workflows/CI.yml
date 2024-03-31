@@ -34,7 +34,6 @@ jobs:
           arch: ${{ matrix.arch }}
       - uses: julia-actions/cache@v1
       - uses: julia-actions/julia-buildpkg@v1
-      - run: julia --project=. -e 'using Pkg; pkg"add GeometryOps#main"'
       - uses: julia-actions/julia-runtest@v1
   docs:
     name: Documentation
@@ -47,8 +46,6 @@ jobs:
       - uses: julia-actions/setup-julia@v1
         with:
           version: '1'
-      - name: "Install dev versions of packages"
-        run: julia --project=docs -e 'using Pkg; pkg"add GeometryOps#main DocumenterVitepress#as/dont_copy_package_lock_json"'
       - uses: julia-actions/julia-docdeploy@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
