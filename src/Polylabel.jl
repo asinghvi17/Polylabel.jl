@@ -86,23 +86,24 @@ function queue_cell!(cells_visited, queue, cell)
 end
 
 
+
 """
-    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::Tuple{Float64, Float64}
-    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::Tuple{Float64, Float64}
+    polylabel(polygon; rtol = 0.01, atol = nothing)::Tuple{Float64, Float64}
 
-`polylabel` finds the pole of inaccessibility of the given polygon or multipolygon, and returns
-its coordinates as a 2-Tuple of `(x, y)`.  Tolerances can be specified.  
+`polylabel` finds the pole of inaccessibility (most distant internal point from the border) 
+of the given polygon or multipolygon, and returns its coordinates as a 2-Tuple of `(x, y)`.  
 
-Any geometry which expresses the `GeoInterface.jl` polygon or multipolygon traits can be passed to this method,
-so long as it implements the `GeoInterface` methods `extent`, `contains`, and `centroid`, in addition to the polygon
-`coordinates`, `getexterior`, and `gethole` interfaces.
+Any geometry which implements the [`GeoInterface.jl`](https://github.com/JuliaGeo/GeoInterface.jl) 
+polygon or multipolygon traits can be passed to this method.
 
-`rtol` is relative tolerance, `atol` is absolute tolerance (in the same vein as `Base.isapprox`).
-When `atol` is provided, it overrides `rtol`.
+This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - 
+you can find a lot more information there! To summarize, the algorithm is basically a quad-tree search across the 
+polygon, which finds the point which is most distant from any edge.
 
-!!! warning
-    The performance of this function is still being actively improved; specifically the signed distance
-    function needs some optimization.  Until then, this will be much slower than the equivalent in Python/JS.
+The algorithm is iterative, and the `tol` keywords control the convergence criteria.  
+
+`rtol` is relative distance between two candidate points, `atol` is absolute distance (in the same vein as `Base.isapprox`).
+When `atol` is provided, it overrides `rtol`.  Once a candidate points satisfies the convergence criteria, it is returned.
 """
 function polylabel(polygon; atol = nothing, rtol = 0.01)
     @assert GI.trait(polygon) isa Union{GI.PolygonTrait, GI.MultiPolygonTrait} """
