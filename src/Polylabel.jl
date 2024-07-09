@@ -12,8 +12,9 @@ The algorithm is based on the JavaScript implementation by Vladimir Agafonkin an
 
 module Polylabel
 
-using DataStructures # for PriorityQueue
-import GeoInterface as GI, GeometryOps as GO
+using DataStructures      # for PriorityQueue
+import GeoInterface as GI # for polygon/multipolygon traits and to get coordinates from geometry
+import GeometryOps as GO  # for signed distance
 
 export polylabel
 
@@ -34,11 +35,7 @@ struct Cell{T}
     "The maximum distance from the polygon exterior within a cell."
     max_distance::T
 end
-
-for operator in (:<, :≤, :(==), :≥, :>, :isless, :isgreater)
-    @eval Base.$(operator)(c1::Cell{T}, c2::Cell{T}) where {T <: Number} = Base.$(operator)(c1.max_distance, c2.max_distance)
-end
-
+# Define some constructors for the `Cell` type, for convenience.
 function Cell(x, y, half_size, polygon)
 
     dist = -GO.signed_distance(polygon, (x, y))
@@ -59,12 +56,19 @@ function Cell(centroid, half_size, polygon)
     return Cell(x, y, half_size, polygon)
 end
 
+# Eval in some comparison / boolean operations for cells.  These all compare distance.
+# It is not necessary to do this but it makes the code in `polylabel` more readable.
+for operator in (:<, :≤, :(==), :≥, :>, :isless, :isgreater)
+    @eval Base.$(operator)(c1::Cell{T}, c2::Cell{T}) where {T <: Number} = Base.$(operator)(c1.max_distance, c2.max_distance)
+end
 
+# This defines how cells are queued.  Heaps and queues can throw errors,
+# so we just show the cell and the queue as debug statements, then rethrow.
 function queue_cell!(queue::DataStructures.AbstractHeap, cell)
     try
         push!(queue, cell)
     catch e
-        @show cell queue
+        @debug cell queue
         rethrow(e)
     end
 end
@@ -74,18 +78,20 @@ function queue_cell!(queue::DataStructures.PriorityQueue, cell)
     try
         enqueue!(queue, cell, cell.max_distance)
     catch e
-        @show cell queue
+        @debug cell queue
         rethrow(e)
     end
 end
 
-# for debugging
+# for debugging - note that this is a 3-arg version that stores
+# all cells visited.  The README visualization was made this way.
 function queue_cell!(cells_visited, queue, cell)
     push!(cells_visited, cell)
     queue_cell!(queue, cell)
 end
 
 
+# Now, we define the main function.
 
 """
     polylabel(polygon; rtol = 0.01, atol = nothing)::Tuple{Float64, Float64}
@@ -106,6 +112,7 @@ The algorithm is iterative, and the `tol` keywords control the convergence crite
 When `atol` is provided, it overrides `rtol`.  Once a candidate points satisfies the convergence criteria, it is returned.
 """
 function polylabel(polygon; atol = nothing, rtol = 0.01)
+    # First, check that the geometry implements GeoInterface.
     @assert GI.trait(polygon) isa Union{GI.PolygonTrait, GI.MultiPolygonTrait} """
     The input must be a polygon or multipolygon type, indicated by `GeoInterface.trait(polygon)`.  
     
