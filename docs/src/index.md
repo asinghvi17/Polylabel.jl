@@ -23,7 +23,7 @@ fra_states = GADM.get("FRA"; depth = 1) |> DataFrame
 ```
 Now, let's plot them using [Makie.jl](https://github.com/MakieOrg/Makie.jl).
 ```@example tutorial
-using Makie, GeoInterfaceMakie
+using CairoMakie, GeoInterfaceMakie
 f, a, p = poly(
     fra_states.geom; 
     color = 1:size(fra_states, 1), 
