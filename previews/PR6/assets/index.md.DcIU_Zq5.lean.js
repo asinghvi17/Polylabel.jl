@@ -1,1 +1,0 @@
-import{_ as e,c as a,o,a7 as l}from"./chunks/framework.LSeiR9Kd.js";const g=JSON.parse('{"title":"Polylabel","description":"","frontmatter":{},"headers":[],"relativePath":"index.md","filePath":"index.md","lastUpdated":null}'),i={name:"index.md"},t=l("",11),s=[t];function n(r,p,d,h,c,b){return o(),a("div",null,s)}const m=e(i,[["render",n]]);export{g as __pageData,m as default};
