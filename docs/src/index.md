@@ -32,6 +32,7 @@ using CairoMakie, GeoInterfaceMakie
 f, a, p = poly( # the `poly` recipe plots polygons
     fra_states.geom; 
     color = 1:size(fra_states, 1),  # this can be anything
+    colormap = :linear_gow_65_90_c35_n256,
     axis = (; aspect = DataAspect())
 )
 ```
@@ -44,7 +45,7 @@ label_points = polylabel.(fra_states.geom) # broadcast across array of polygons
 
 Let's also show these obtained points on the plot:
 ```@example tutorial
-sp = scatter!(a, label_points; color = :red)
+sp = scatter!(a, label_points; color = (:red, 0.3))
 f
 ```
 
@@ -54,8 +55,11 @@ labelplot = text!(
     a, label_points; 
     text = fra_states.NAME_1, 
     align = (:center, :center), 
-    fontsize = 10
+    fontsize = 10,
+    strokecolor = :white,
+    strokewidth = 0.1
 )
+
 f
 ```
 
@@ -63,7 +67,7 @@ Just for context, let's also plot the centroids:
 ```@example tutorial
 using GeometryOps: centroid
 centroids = centroid.(fra_states.geom)
-scatter!(a, centroids; color = :blue)
+scatter!(a, centroids; color = (:blue, 0.3))
 f
 ```
 
