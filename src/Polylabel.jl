@@ -12,8 +12,9 @@ The algorithm is based on the JavaScript implementation by Vladimir Agafonkin an
 
 module Polylabel
 
-using DataStructures # for PriorityQueue
-import GeoInterface as GI, GeometryOps as GO
+using DataStructures      # for PriorityQueue
+import GeoInterface as GI # for polygon/multipolygon traits and to get coordinates from geometry
+import GeometryOps as GO  # for signed distance
 
 export polylabel
 
@@ -34,11 +35,7 @@ struct Cell{T}
     "The maximum distance from the polygon exterior within a cell."
     max_distance::T
 end
-
-for operator in (:<, :≤, :(==), :≥, :>, :isless, :isgreater)
-    @eval Base.$(operator)(c1::Cell{T}, c2::Cell{T}) where {T <: Number} = Base.$(operator)(c1.max_distance, c2.max_distance)
-end
-
+# Define some constructors for the `Cell` type, for convenience.
 function Cell(x, y, half_size, polygon)
 
     dist = -GO.signed_distance(polygon, (x, y))
@@ -59,12 +56,19 @@ function Cell(centroid, half_size, polygon)
     return Cell(x, y, half_size, polygon)
 end
 
+# Eval in some comparison / boolean operations for cells.  These all compare distance.
+# It is not necessary to do this but it makes the code in `polylabel` more readable.
+for operator in (:<, :≤, :(==), :≥, :>, :isless, :isgreater)
+    @eval Base.$(operator)(c1::Cell{T}, c2::Cell{T}) where {T <: Number} = Base.$(operator)(c1.max_distance, c2.max_distance)
+end
 
+# This defines how cells are queued.  Heaps and queues can throw errors,
+# so we just show the cell and the queue as debug statements, then rethrow.
 function queue_cell!(queue::DataStructures.AbstractHeap, cell)
     try
         push!(queue, cell)
     catch e
-        @show cell queue
+        @debug cell queue
         rethrow(e)
     end
 end
@@ -74,37 +78,41 @@ function queue_cell!(queue::DataStructures.PriorityQueue, cell)
     try
         enqueue!(queue, cell, cell.max_distance)
     catch e
-        @show cell queue
+        @debug cell queue
         rethrow(e)
     end
 end
 
-# for debugging
+# for debugging - note that this is a 3-arg version that stores
+# all cells visited.  The README visualization was made this way.
 function queue_cell!(cells_visited, queue, cell)
     push!(cells_visited, cell)
     queue_cell!(queue, cell)
 end
 
 
+# Now, we define the main function.
+
 """
-    polylabel(polygon::Polygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::Tuple{Float64, Float64}
-    polylabel(multipoly::MultiPolygon; rtol::Real = 0.01, atol::Union{Nothing, Real} = nothing)::Tuple{Float64, Float64}
+    polylabel(polygon; rtol = 0.01, atol = nothing)::Tuple{Float64, Float64}
 
-`polylabel` finds the pole of inaccessibility of the given polygon or multipolygon, and returns
-its coordinates as a 2-Tuple of `(x, y)`.  Tolerances can be specified.  
+`polylabel` finds the pole of inaccessibility (most distant internal point from the border) 
+of the given polygon or multipolygon, and returns its coordinates as a 2-Tuple of `(x, y)`.  
 
-Any geometry which expresses the `GeoInterface.jl` polygon or multipolygon traits can be passed to this method,
-so long as it implements the `GeoInterface` methods `extent`, `contains`, and `centroid`, in addition to the polygon
-`coordinates`, `getexterior`, and `gethole` interfaces.
+Any geometry which implements the [`GeoInterface.jl`](https://github.com/JuliaGeo/GeoInterface.jl) 
+polygon or multipolygon traits can be passed to this method.
 
-`rtol` is relative tolerance, `atol` is absolute tolerance (in the same vein as `Base.isapprox`).
-When `atol` is provided, it overrides `rtol`.
+This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - 
+you can find a lot more information there! To summarize, the algorithm is basically a quad-tree search across the 
+polygon, which finds the point which is most distant from any edge.
 
-!!! warning
-    The performance of this function is still being actively improved; specifically the signed distance
-    function needs some optimization.  Until then, this will be much slower than the equivalent in Python/JS.
+The algorithm is iterative, and the `tol` keywords control the convergence criteria.  
+
+`rtol` is relative distance between two candidate points, `atol` is absolute distance (in the same vein as `Base.isapprox`).
+When `atol` is provided, it overrides `rtol`.  Once a candidate points satisfies the convergence criteria, it is returned.
 """
 function polylabel(polygon; atol = nothing, rtol = 0.01)
+    # First, check that the geometry implements GeoInterface.
     @assert GI.trait(polygon) isa Union{GI.PolygonTrait, GI.MultiPolygonTrait} """
     The input must be a polygon or multipolygon type, indicated by `GeoInterface.trait(polygon)`.  
     
