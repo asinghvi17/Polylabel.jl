@@ -6,17 +6,50 @@ CurrentModule = Polylabel
 
 ![Gujarat](https://user-images.githubusercontent.com/32143268/214836992-7ff8b5d6-1a15-4655-a13d-bb12c04b4ce1.png)
 
-This package implements an algorithm to find the _pole of inaccessibility_ of a polygon, the most distant internal point from the polygon outline.  This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - you can find a lot more information there!  To summarize, the algorithm is basically a quad-tree search across the polygon which finds the point which is most distant from any edge.  
+`Polylabel.jl` finds the _pole of inaccessibility_ of a polygon, the most distant internal point from the polygon outline.  This is useful for visual techniques like labelling polygons.
 
-In the plot above, this point is shown in orange, while the input polygon (multipolygon in this case) is shown in blue. 
+The main entry point is `Polylabel.polylabel(polygon; atol, rtol)` which processes any [GeoInterface-compatible](https://github.com/JuliaGeo/GeoInterface.jl) polygon (from GeometryBasics.jl, ArchGDAL.jl, LibGEOS.jl, Shapefile.jl, etc.) and returns a point as a 2-tuple of `(x, y)`.  It uses [GeometryOps.jl](https://github.com/JuliaGeo/GeometryOps.jl) to compute distances.
 
-The package is built on top of `GeoInterface.jl` and `GeometryOps.jl`, and works with any polygon or multipolygon object which implements the GeoInterface `geointerface_geomtype` API for reverse conversion.  
+This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - you can find a lot more information there!  To summarize, the algorithm is basically a quad-tree search across the polygon which finds the point which is most distant from any edge.  There are alternative Julia implementations that are essentially the same algorithm in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)
 
-The main entry point is the `polylabel(input [; atol = nothing, rtol = 0.01])` function.  It returns a 2-Tuple of floats, representing the x and y coordinates of the found pole of inaccessibility.
+## Tutorial
 
-```@index
+Polylabel is mostly used to find the optimal point to place a label for a polygon.
+
+Let's label the states of the Netherlands!  First, we'll get the data using [GADM.jl](https://github.com/JuliaGeo/GADM.jl) (but you can load any dataset or even just a custom vector of geometries).
+```@example tutorial
+using GADM, DataFrames
+nl_states = GADM.get("FRA"; depth = 1) |> DataFrame
+```
+Now, let's plot them using [Makie.jl](https://github.com/MakieOrg/Makie.jl).
+```@example tutorial
+using Makie, GeoInterfaceMakie
+f, a, p = poly(nl_states.geom; color = 1:size(nl_states, 1), axis = (; aspect = DataAspect()))
+```
+Now, we get the polylabel points.  Note that this is the only point in this entire tutorial, in which we've used the package!
+```@example tutorial
+using Polylabel
+label_points = polylabel.(nl_states.geom)
+```
+Let's also show this on the plot:
+```@example tutorial
+sp = scatter!(a, label_points; color = :red)
+f
 ```
 
-```@autodocs
-Modules = [Polylabel]
+```@example tutorial
+labelplot = text!(a, label_points; text = nl_states.NAME_1, align = (:center, :center), fontsize = 10)
+f
+```
+
+Just for context, let's also plot the centroids:
+```@example tutorial
+using GeometryOps: centroid
+centroids = centroid.(nl_states.geom)
+scatter!(a, centroids; color = :blue)
+f
+```
+
+```@docs
+polylabel
 ```
