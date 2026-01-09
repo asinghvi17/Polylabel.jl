@@ -10,13 +10,13 @@ CurrentModule = Polylabel
 
 The main entry point is `Polylabel.polylabel(polygon; atol, rtol)` which processes any [GeoInterface-compatible](https://github.com/JuliaGeo/GeoInterface.jl) polygon (from GeometryBasics.jl, ArchGDAL.jl, LibGEOS.jl, Shapefile.jl, etc.) and returns a point as a 2-tuple of `(x, y)`.  It uses [GeometryOps.jl](https://github.com/JuliaGeo/GeometryOps.jl) to compute distances.
 
-This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - you can find a lot more information there!  To summarize, the algorithm is basically a quad-tree search across the polygon which finds the point which is most distant from any edge.  
+This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - you can find a lot more information there!  To summarize, the algorithm is basically a quad-tree search across the polygon which finds the point which is most distant from any edge.
 
 There is an alternative Julia implementation of this algorithm in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)
 
 ## Tutorial
 
-Polylabel is mostly used to find the optimal point to place a label for a polygon.  So let's label the provinces of France!  
+Polylabel is mostly used to find the optimal point to place a label for a polygon.  So let's label the provinces of France!
 
 First, we'll get the data using [GADM.jl](https://github.com/JuliaGeo/GADM.jl) (but you can load any dataset or even just a custom vector of geometries).
 
@@ -30,7 +30,7 @@ Now, let's plot the geometries using [Makie.jl](https://github.com/MakieOrg/Maki
 ```@example tutorial
 using CairoMakie, GeoInterfaceMakie
 f, a, p = poly( # the `poly` recipe plots polygons
-    fra_states.geom; 
+    fra_states.geom;
     color = 1:size(fra_states, 1),  # this can be anything
     colormap = :linear_gow_65_90_c35_n256,
     axis = (; aspect = DataAspect())
@@ -52,9 +52,9 @@ f
 Finally, we'll plot actual labels for the provinces as text:
 ```@example tutorial
 labelplot = text!(
-    a, label_points; 
-    text = fra_states.NAME_1, 
-    align = (:center, :center), 
+    a, label_points;
+    text = fra_states.NAME_1,
+    align = (:center, :center),
     fontsize = 10,
     strokecolor = :white,
     strokewidth = 0.1

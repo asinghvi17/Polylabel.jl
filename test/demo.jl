@@ -27,8 +27,8 @@ function view_signed_distance_field(p1)
         colormap = :RdBu,
         colorrange = (-clim, clim),
         axis = (aspect = Makie.DataAspect(), title = "Signed distance field of polygon")
-        
-    )   
+
+    )
     Makie.Colorbar(fig[1, 2], plt; label = "Signed distance", alignmode = Makie.Inside())
     fig
 end
@@ -58,8 +58,8 @@ function view_contains_field(p1)
         colormap = :RdBu,
         colorrange = (-clim, clim),
         axis = (aspect = Makie.DataAspect(), title = "Signed distance field of polygon")
-        
-    )   
+
+    )
     Makie.Colorbar(fig[1, 2], plt; label = "Signed distance", alignmode = Makie.Inside())
     fig
 end
