@@ -76,7 +76,7 @@ end
 
 function queue_cell!(queue::DataStructures.PriorityQueue, cell)
     try
-        enqueue!(queue, cell, cell.max_distance)
+        push!(queue, cell => cell.max_distance)
     catch e
         @debug cell queue
         rethrow(e)
@@ -161,7 +161,7 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
 
     while !(Base.isempty(cell_queue))
     
-        current_cell = dequeue!(cell_queue)
+        current_cell = popfirst!(cell_queue)
 
         if current_cell.distance > best_cell.distance
             best_cell = current_cell
