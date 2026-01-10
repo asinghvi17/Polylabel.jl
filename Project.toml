@@ -1,7 +1,7 @@
 name = "Polylabel"
 uuid = "49a44318-e865-4b63-9842-695152d634c1"
 authors = ["Anshul Singhvi <anshulsinghvi@gmail.com> and contributors"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
