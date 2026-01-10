@@ -161,7 +161,7 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
 
     while !(Base.isempty(cell_queue))
 
-        current_cell = popfirst!(cell_queue)
+        current_cell = popfirst!(cell_queue).first
 
         if current_cell.distance > best_cell.distance
             best_cell = current_cell
