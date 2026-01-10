@@ -2,8 +2,8 @@
 
 # Polylabel.jl
 
-This is a Julia implementation of the [polylabel](https://github.com/mapbox/polylabel) algorithm. 
-The polylabel algorithm finds the pole of inaccessibility (the most distant internal point from the polygon outline) 
+This is a Julia implementation of the [polylabel](https://github.com/mapbox/polylabel) algorithm.
+The polylabel algorithm finds the pole of inaccessibility (the most distant internal point from the polygon outline)
 of a polygon, which can be useful for labeling polygons on a map in a visually pleasing way.
 
 The algorithm is based on the JavaScript implementation by Vladimir Agafonkin and contributors.
@@ -76,7 +76,7 @@ end
 
 function queue_cell!(queue::DataStructures.PriorityQueue, cell)
     try
-        enqueue!(queue, cell, cell.max_distance)
+        push!(queue, cell => cell.max_distance)
     catch e
         @debug cell queue
         rethrow(e)
@@ -96,17 +96,17 @@ end
 """
     polylabel(polygon; rtol = 0.01, atol = nothing)::Tuple{Float64, Float64}
 
-`polylabel` finds the pole of inaccessibility (most distant internal point from the border) 
-of the given polygon or multipolygon, and returns its coordinates as a 2-Tuple of `(x, y)`.  
+`polylabel` finds the pole of inaccessibility (most distant internal point from the border)
+of the given polygon or multipolygon, and returns its coordinates as a 2-Tuple of `(x, y)`.
 
-Any geometry which implements the [`GeoInterface.jl`](https://github.com/JuliaGeo/GeoInterface.jl) 
+Any geometry which implements the [`GeoInterface.jl`](https://github.com/JuliaGeo/GeoInterface.jl)
 polygon or multipolygon traits can be passed to this method.
 
-This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - 
-you can find a lot more information there! To summarize, the algorithm is basically a quad-tree search across the 
+This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) -
+you can find a lot more information there! To summarize, the algorithm is basically a quad-tree search across the
 polygon, which finds the point which is most distant from any edge.
 
-The algorithm is iterative, and the `tol` keywords control the convergence criteria.  
+The algorithm is iterative, and the `tol` keywords control the convergence criteria.
 
 `rtol` is relative distance between two candidate points, `atol` is absolute distance (in the same vein as `Base.isapprox`).
 When `atol` is provided, it overrides `rtol`.  Once a candidate points satisfies the convergence criteria, it is returned.
@@ -114,15 +114,15 @@ When `atol` is provided, it overrides `rtol`.  Once a candidate points satisfies
 function polylabel(polygon; atol = nothing, rtol = 0.01)
     # First, check that the geometry implements GeoInterface.
     @assert GI.trait(polygon) isa Union{GI.PolygonTrait, GI.MultiPolygonTrait} """
-    The input must be a polygon or multipolygon type, indicated by `GeoInterface.trait(polygon)`.  
-    
+    The input must be a polygon or multipolygon type, indicated by `GeoInterface.trait(polygon)`.
+
     $(
         isnothing(GI.trait(polygon)) ? "The input has no GeoInterface trait and was not recognized by GeoInterface." : "The input has GeoInterface trait $(GI.trait(polygon)), which is not PolygonTrait() or MultiPolygonTrait()."
     )
 
     The input type was $(typeof(polygon)).
     """
-    
+
     bounding_box = GI.extent(polygon)
     min_x, max_x = bounding_box.X
     min_y, max_y = bounding_box.Y
@@ -160,8 +160,8 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
     end
 
     while !(Base.isempty(cell_queue))
-    
-        current_cell = dequeue!(cell_queue)
+
+        current_cell = popfirst!(cell_queue).first
 
         if current_cell.distance > best_cell.distance
             best_cell = current_cell
@@ -173,7 +173,7 @@ function polylabel(polygon; atol = nothing, rtol = 0.01)
 
         # split the cell into quadrants again and move Forward
 
-        h = current_cell.half_size / 2.0 
+        h = current_cell.half_size / 2.0
         x, y = current_cell.x, current_cell.y
 
         queue_cell!(#=cells_visited,=# cell_queue, Cell(x - h, y - h, h, polygon))

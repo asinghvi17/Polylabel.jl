@@ -13,7 +13,7 @@ The main entry point is `Polylabel.polylabel(polygon; atol, rtol)` which process
 This algorithm was originally written (and taken from) [mapbox/polylabel](https://github.com/mapbox/polylabel) - you can find a lot more information there!  To summarize, the algorithm is basically a quad-tree search across the polygon which finds the point which is most distant from any edge.  There are alternative Julia implementations that are essentially the same algorithm in [DelaunayTriangulation.jl](https://github.com/DanielVandH/DelaunayTriangulation.jl)
 
 
-In the plot above, the **pole of inaccessibility** is shown in orange, while the input polygon (multipolygon in this case) is shown in blue. 
+In the plot above, the **pole of inaccessibility** is shown in orange, while the input polygon (multipolygon in this case) is shown in blue.
 
 ## Quick start
 
